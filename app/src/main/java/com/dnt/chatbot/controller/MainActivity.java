@@ -28,6 +28,7 @@ import net.gotev.speech.TextToSpeechCallback;
 import java.util.Date;
 import java.util.List;
 
+import ai.api.model.AIRequest;
 import ai.api.model.AIResponse;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements SpeechDelegate {
     private ImageLoader mImageLoader;
     private User mBot;
     private User mUser;
+    private List mLastContexts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,15 +121,21 @@ public class MainActivity extends AppCompatActivity implements SpeechDelegate {
     }
 
     private void queryIntent(String query) {
+        AIRequest req = IntentRequestTask.queryRequest(query);
+        if (mLastContexts != null) {
+            req.setContexts(mLastContexts);
+        }
+
         new IntentRequestTask(new IntentRequestTask.IntentRequestTaskListener() {
             @Override
             public void onRequestResult(AIResponse result) {
                 if (result != null) {
                     String speech = result.getResult().getFulfillment().getSpeech();
                     insertBotMessage(speech);
+                    mLastContexts = result.getResult().getContexts();
                 }
             }
-        }).execute(IntentRequestTask.queryRequest(query));
+        }).execute(req);
     }
 
     private void insertBotMessage(String message) {
